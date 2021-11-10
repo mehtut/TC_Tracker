@@ -152,15 +152,17 @@ def get_WRF_variables(common_object, scenario_type, date_time): #, lon_index_wes
 	file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/' + date_time.strftime('%Y') + '/WRF/' + scenario_type + '/E9_0506/wrf/wrfout_d01_'
 #	file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/' + scenario_type + '/' + date_time.strftime('%Y') + '/wrfout_d01_'
 	# open file
-	data = Dataset(file_location + date_time.strftime("%Y-%m-%d_%H_%M_%S"))
+	data = Dataset(file_location + date_time.strftime("%Y-%m-%d"))
+	# dictionary that relates the hour that the date_time is on to the time index used when pulling the data
+	time_index_dic = {'00' : 0, '06' : 1, '12' : 2, '18' : 3}
 	# get u, v, and p
 	print("Pulling variables...")
-	p_3d = wrf.getvar(data, 'pressure') # pressure in hPa
-	u_3d = wrf.getvar(data, 'ua') # zonal wind in m/s
-	v_3d = wrf.getvar(data, 'va') # meridional wind in m/s
-	t_3d = wrf.getvar(data, 'tk') # temperature in K
-	wspd_10m = wrf.getvar(data, 'wspd_wdir10')[0] # 10 m windspeed in m/s
-	slp = wrf.getvar(data, 'slp') # sea level pressure in hPa
+	p_3d = wrf.getvar(data, 'pressure', timeidx=time_index_dic[date_time.strftime("%H")]) # pressure in hPa
+	u_3d = wrf.getvar(data, 'ua', timeidx=time_index_dic[date_time.strftime("%H")]) # zonal wind in m/s
+	v_3d = wrf.getvar(data, 'va', timeidx=time_index_dic[date_time.strftime("%H")]) # meridional wind in m/s
+	t_3d = wrf.getvar(data, 'tk', timeidx=time_index_dic[date_time.strftime("%H")]) # temperature in K
+	wspd_10m = wrf.getvar(data, 'wspd_wdir10', timeidx=time_index_dic[date_time.strftime("%H")])[0] # 10 m windspeed in m/s
+	slp = wrf.getvar(data, 'slp', timeidx=time_index_dic[date_time.strftime("%H")]) # sea level pressure in hPa
 
 	# get u and v at the pressure levels 850, and 300 hPa
 	u_levels = calc_var_pres_levels(p_3d, u_3d, [850., 600., 300.])
