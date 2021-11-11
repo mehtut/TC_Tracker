@@ -34,7 +34,7 @@ import numpy.ctypeslib as ctl
 # which is the model attribute of the common_object. 
 def get_common_track_data(common_object):
 	# box of interest over the Atlantic/Africa (values from Chris Patricola)
-	north_lat = 50.5
+	north_lat = 49.5
 	south_lat = 3.5
 	west_lon = -124.5
 	east_lon = 45.5 
@@ -66,7 +66,7 @@ def get_common_track_data(common_object):
 		# get north, south, east, west indices
 		lon_index_west, lat_index_south = wrf.ll_to_xy(data,south_lat,west_lon, meta=False) 
 		lon_index_east, lat_index_north = wrf.ll_to_xy(data,north_lat,east_lon, meta=False) 
-#		print(lon_index_west)
+		print(lon_index_west)
 #		print(lon_index_east)
 		#lat_crop = lat.values[lat_index_south:lat_index_north+1,lon_index_west:lon_index_east+1]
 		#lon_crop = lon.values[lat_index_south:lat_index_north+1,lon_index_west:lon_index_east+1]
@@ -152,7 +152,7 @@ def get_WRF_variables(common_object, scenario_type, date_time): #, lon_index_wes
 	file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/' + date_time.strftime('%Y') + '/WRF/' + scenario_type + '/E9_0506/wrf/wrfout_d01_'
 #	file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/' + scenario_type + '/' + date_time.strftime('%Y') + '/wrfout_d01_'
 	# open file
-	data = Dataset(file_location + date_time.strftime("%Y-%m-%d"))
+	data = Dataset(file_location + date_time.strftime("%Y-%m-%d" + "_00_00_00"))
 	# dictionary that relates the hour that the date_time is on to the time index used when pulling the data
 	time_index_dic = {'00' : 0, '06' : 1, '12' : 2, '18' : 3}
 	# get u, v, and p
