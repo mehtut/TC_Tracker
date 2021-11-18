@@ -40,7 +40,7 @@ def get_common_track_data(common_object):
 	east_lon = 45.5 
 
 	if common_object.model == 'WRF':
-		dt = 6 # time between files
+		dt = 6 # time between history output files (e.g. is the data 6 hourly, 3 hourly, etc.)
 		# get the latitude and longitude and the north, south, east, and west indices of a rectangle over Africa and the Atlantic 
 		file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/Historical/wrfout_d01_2008-07-01_00_00_00'
 		data = Dataset(file_location)
@@ -63,7 +63,7 @@ def get_common_track_data(common_object):
 #		lon_index_west = lon.shape[1] + lon_index_west # this stopped being necessary 
 		lon_index_east = lon.shape[1] + lon_index_east
 
-		# the total number of degrees in the longitude dimension
+		# the total number of degrees in the longitude dimension; this needs to be changed if not using the WRF TCM
 		lon_degrees = 360.
 		
 	elif common_object.model == 'ERA5':

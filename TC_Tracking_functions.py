@@ -505,13 +505,17 @@ def circle_avg_m_point(common_object,var,lat_lon_pair):
 	# take circle average 
 	tempv = 0.0
 	divider = 0.0
+	# print(common_object.lat.shape)
+	# print(common_object.lat.shape[1])
 	for radius_index in range(-radius_gridpts,radius_gridpts+1): # work way up circle
-#		print("radius_index =", radius_index)
+		# print("radius_index =", radius_index)
+		# print("lat_index_maxima+radius_index =", lat_index_maxima+radius_index)
 		# make sure we're not goint out of bounds, and if we are go to the next iteration of the loop
-		if (lat_index_maxima+radius_index) < 0 or (lat_index_maxima+radius_index) > (common_object.lat.shape[1]-1):
+		if (lat_index_maxima+radius_index) < 0 or (lat_index_maxima+radius_index) > (common_object.lat.shape[0]-1):
 			continue
 
 		lat1 = common_object.lat[lat_index_maxima,lon_index_maxima]  # center of circle
+		# print("lat1 =", lat1)
 		lat2 = common_object.lat[lat_index_maxima+radius_index,lon_index_maxima] # vertical distance from circle center
 		# make sure that lat2, which has the radius added, doesn't go off the grid (either off the top or the bottom) 
 		
