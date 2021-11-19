@@ -40,9 +40,10 @@ def get_common_track_data(common_object):
 	east_lon = 45.5 
 
 	if common_object.model == 'WRF':
-		dt = 6 # time between history output files (e.g. is the data 6 hourly, 3 hourly, etc.)
+		dt = 3 # time between history output files (e.g. is the data 6 hourly, 3 hourly, etc.)
 		# get the latitude and longitude and the north, south, east, and west indices of a rectangle over Africa and the Atlantic 
-		file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/Historical/wrfout_d01_2008-07-01_00_00_00'
+		file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/2003/WRF/control/E0_0515/wrf/wrfout_d01_2003-11-30_00_00_00'
+#		file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/Historical/wrfout_d01_2008-07-01_00_00_00'
 		data = Dataset(file_location)
 		# get lat and lon values
 		# get the latitude and longitude at a single time (since they don't change with time)
@@ -64,7 +65,8 @@ def get_common_track_data(common_object):
 		lon_index_east = lon.shape[1] + lon_index_east
 
 		# the total number of degrees in the longitude dimension; this needs to be changed if not using the WRF TCM
-		lon_degrees = 360.
+#		lon_degrees = 360. # for TCM
+		lon_degrees = np.abs(np.amin(lon) - np.amax(lon))
 		
 	elif common_object.model == 'ERA5':
 		# dt for ERA5 is 1 hour (data is hourly), but set dt to whatever the dt is for the dataset to be compared with
@@ -137,7 +139,8 @@ def get_common_track_data(common_object):
 # The function returns u, v, relative vorticity, and curvature vorticity on specific pressure levels
 def get_WRF_variables(common_object, scenario_type, date_time): #, lon_index_west, lat_index_south, lon_index_east, lat_index_north):
 	# location of WRF file
-	file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/' + scenario_type + '/' + date_time.strftime('%Y') + '/wrfout_d01_'
+	file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/' + date_time.strftime('%Y') + '/WRF/' + scenario_type + '/E0_0515/wrf/wrfout_d01_'
+#	file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/' + scenario_type + '/' + date_time.strftime('%Y') + '/wrfout_d01_'
 	# open file
 	data = Dataset(file_location + date_time.strftime("%Y-%m-%d_%H_%M_%S"))
 	# get u, v, and p
