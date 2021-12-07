@@ -24,3 +24,17 @@ To iterate through all the track objects, use the following code:
 for tc_track in TC_track_list:
   print(tc_track.latlon_list)	
 ```
+
+To write out track information to a CSV file, use the following code:
+```
+from TC_Tracks import *
+import csv
+# append each list of TC track lat/lon pairs to one list
+track_latlon_list = [] 
+for tc_track in TC_track_list:
+  track_latlon_list.append(tc_track.latlon_list)
+# write the list of all individual TC track lat/lon lists to a CSV file 
+with open("out.csv", "w", newline="") as f:
+  writer = csv.writer(f)
+  writer.writerows(track_latlon_list)
+```
