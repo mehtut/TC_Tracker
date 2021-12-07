@@ -40,7 +40,7 @@ def get_common_track_data(common_object):
 	east_lon = 45.5 
 
 	if common_object.model == 'WRF':
-		dt = 3 # time between history output files (e.g. is the data 6 hourly, 3 hourly, etc.)
+		dt = 3 # time between history outputs (e.g. is the data 6 hourly, 3 hourly, etc.)
 		# get the latitude and longitude and the north, south, east, and west indices of a rectangle over Africa and the Atlantic 
 		file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/2003/WRF/control/E0_0515/wrf/wrfout_d01_2003-11-30_00_00_00'
 #		file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/Historical/wrfout_d01_2008-07-01_00_00_00'
@@ -49,10 +49,20 @@ def get_common_track_data(common_object):
 		# get the latitude and longitude at a single time (since they don't change with time)
 		lat = wrf.getvar(data, "lat", meta=False) # ordered lat, lon
 		lon = wrf.getvar(data, "lon", meta=False) # ordered lat, lon
+		# check to see if the box values (north_lat, etc.) exceed the domain of the WRF data
+		if np.amax(lat) < north_lat:
+			north_lat = np.amax(lat)
+		if np.amin(lat) > south_lat:
+			south_lat = np.amin(lat)
+		if np.amax(lon) < east_lon:
+			east_lon = np.amax(lon)
+		if np.amin(lon) > west_lon:
+			west_lon = np.amin(lon)
+		print(north_lat, south_lat, east_lon, west_lon)
 		#print(lat)
 		#print(lon)
-		#print(lat.shape)
-		#print(lon.shape)
+		# print(lat.shape)
+		# print(lon.shape)
 		# get north, south, east, west indices
 		lon_index_west, lat_index_south = wrf.ll_to_xy(data,south_lat,west_lon, meta=False) 
 		lon_index_east, lat_index_north = wrf.ll_to_xy(data,north_lat,east_lon, meta=False) 

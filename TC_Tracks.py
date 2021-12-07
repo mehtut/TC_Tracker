@@ -110,6 +110,7 @@ def main():
 
 	# Set threshold values. These are based on Chris Patricola's tracker that was used on 27 km WRF data.
 	# minimum 10m windspeed
+#	wspd_10m_threshold = 18.5 # m/s
 	wspd_10m_threshold = 17.5 # m/s
 #	wspd_10m_threshold = 16.0 # m/s
 	# 850mb vorticity threshold 
@@ -120,7 +121,7 @@ def main():
 	warm_core_threshold = 2.0 # K, originally was set at 2K
 
 	# set radius (this is my new addition to the code methodology)
-	radius_km = 400 # km
+	radius_km = 100 # km
 
 	# create an object from Common_track_data that will hold the model_type, lat, lon and dt information
 	common_object = Common_track_data()
@@ -141,8 +142,8 @@ def main():
 
 	# set time information
 #	times = np.arange(datetime(int(year),5,1,0), datetime(int(year),11,1,0), timedelta(hours=common_object.dt)).astype(datetime) # May - October (AEW seasn)
-	times = np.arange(datetime(int(year),6,1,0), datetime(int(year),12,1,0), timedelta(hours=common_object.dt)).astype(datetime) # June - November (tropical cyclone season)
-#	times = np.arange(datetime(int(year),6,1,0), datetime(int(year),12,1,0), timedelta(hours=common_object.dt)).astype(datetime) # month of August
+#	times = np.arange(datetime(int(year),6,1,0), datetime(int(year),12,1,0), timedelta(hours=common_object.dt)).astype(datetime) # June - November (tropical cyclone season)
+	times = np.arange(datetime(int(year),8,1,0), datetime(int(year),9,1,0), timedelta(hours=common_object.dt)).astype(datetime) # month of August
 #	times = np.arange(datetime(int(year),9,1,0), datetime(int(year),10,1,0), timedelta(hours=common_object.dt)).astype(datetime) # September
 
 	# create a working list for TC tracks
@@ -216,8 +217,8 @@ def main():
 		# Mean wind speed around the center of the storm at 850 hPa must be greater than at 300 hPa
 		# Calculate average wind speeds within 2.5 degrees on each side of TC center 
 		# need to make sure the list from conditions 4 and 6 isn't empty to move on to condition 5
-		if adjust_tc_locs_wspd:
-#		if adjust_tc_locs_warm_core:
+#		if adjust_tc_locs_wspd:
+		if adjust_tc_locs_warm_core:
 			print("Condition 5")
 			adjust_tc_locs_shear = shear_check(common_object, adjust_tc_locs_warm_core, u_3d, v_3d)
 			print(adjust_tc_locs_shear)
@@ -299,10 +300,10 @@ def main():
 					TC_tracks_list.remove(tc_track)
 					continue
 
-				# if the tc_track object has not had any lat/lon points that are close to new TC lat/lon points for over 2 days (8 time steps),
-				# add the track object to finished_TC_tracks_list and remove it from TC_tracks_list
-				number_of_time_steps = 8
-				if tc_track.counter > number_of_time_steps: # 8 is for 2 days
+				# if the tc_track object has not had any lat/lon points that are close to new TC lat/lon points for over 2 days (48 hours divided by dt to get
+				# the number of time steps), add the track object to finished_TC_tracks_list and remove it from TC_tracks_list
+				number_of_time_steps = int(48/common_object.dt) # 48/dt is the number of time steps in 2 days
+				if tc_track.counter > number_of_time_steps: 
 					print("track finished - fading TC candidates")
 					# remove the track object from TC_tracks_list
 					TC_tracks_list.remove(tc_track)
@@ -327,11 +328,23 @@ def main():
 				print(tc_track.latlon_list)
 
 
+	print("Total number of TC tracks =", len(finished_TC_tracks_list))
+
+	# More filtering to check for tracks that weren't long enough
+	for tc_track in list(finished_TC_tracks_list):
+		# check for tracks that haven't lasted long enough. If the track hasn't lasted for two days (which is < 48/dt + 1 time steps ), get rid of it
+		if len(tc_track.latlon_list) < ((48/common_object.dt)+1):
+			print("not enough times")
+#			print(tc_track.latlon_list)
+#			print(tc_track.time_list)
+			finished_TC_tracks_list.remove(tc_track)
+			continue
+
 #	print("length of TC list =", len(final_TC_tracks_list))
-	for tc_track in TC_tracks_list:
-		print(tc_track.time_list)
-		print(tc_track.latlon_list)
-		print(tc_track.counter)
+	# for tc_track in TC_tracks_list:
+	# 	print(tc_track.time_list)
+	# 	print(tc_track.latlon_list)
+	# 	print(tc_track.counter)
 
 	for tc_track in finished_TC_tracks_list:
 		print(tc_track.time_list)
