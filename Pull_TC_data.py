@@ -154,7 +154,10 @@ def get_WRF_variables(common_object, scenario_type, date_time): #, lon_index_wes
 	# open file
 	data = Dataset(file_location + date_time.strftime("%Y-%m-%d" + "_00_00_00"))
 	# dictionary that relates the hour that the date_time is on to the time index used when pulling the data
-	time_index_dic = {'00' : 0, '06' : 1, '12' : 2, '18' : 3}
+	if common_object.dt == 6:
+		time_index_dic = {'00' : 0, '06' : 1, '12' : 2, '18' : 3} 
+	elif common_object.dt == 3:
+		time_index_dic = {'00' : 0, '03' : 1, '06' : 2, '09' : 3, '12' : 4, '15' : 5, '18' : 6, '21' : 7} 
 	# get u, v, and p
 	print("Pulling variables...")
 	p_3d = wrf.getvar(data, 'pressure', timeidx=time_index_dic[date_time.strftime("%H")]) # pressure in hPa
