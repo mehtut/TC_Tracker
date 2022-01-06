@@ -42,7 +42,7 @@ def get_common_track_data(common_object):
 	if common_object.model == 'WRF':
 		dt = 3 # time between history outputs (e.g. is the data 6 hourly, 3 hourly, etc.)
 		# get the latitude and longitude and the north, south, east, and west indices of a rectangle over Africa and the Atlantic 
-		file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/2003/WRF/control/E0_0515/wrf/wrfout_d01_2003-11-30_00_00_00'
+		file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/2011/WRF/north_filter/E1_0514/wrf/wrfout_d01_2011-11-30_00_00_00'
 #		file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/Historical/wrfout_d01_2008-07-01_00_00_00'
 		data = Dataset(file_location)
 		# get lat and lon values
@@ -72,7 +72,7 @@ def get_common_track_data(common_object):
 		#lon_crop = lon.values[lat_index_south:lat_index_north+1,lon_index_west:lon_index_east+1]
 		# the following two lines are to correct for the weird negative indexing that comes back from the wrf.ll_to_xy function
 #		lon_index_west = lon.shape[1] + lon_index_west # this stopped being necessary 
-		lon_index_east = lon.shape[1] + lon_index_east
+#		lon_index_east = lon.shape[1] + lon_index_east # only for TCM runs
 
 		# the total number of degrees in the longitude dimension; this needs to be changed if not using the WRF TCM
 #		lon_degrees = 360. # for TCM
@@ -149,7 +149,7 @@ def get_common_track_data(common_object):
 # The function returns u, v, relative vorticity, and curvature vorticity on specific pressure levels
 def get_WRF_variables(common_object, scenario_type, date_time): #, lon_index_west, lat_index_south, lon_index_east, lat_index_north):
 	# location of WRF file
-	file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/' + date_time.strftime('%Y') + '/WRF/' + scenario_type + '/E0_0515/wrf/wrfout_d01_'
+	file_location = '/global/cscratch1/sd/ebercosh/AEW_Suppression/' + date_time.strftime('%Y') + '/WRF/' + scenario_type + '/E1_0514/wrf/wrfout_d01_'
 #	file_location = '/global/cscratch1/sd/ebercosh/WRF_TCM/' + scenario_type + '/' + date_time.strftime('%Y') + '/wrfout_d01_'
 	# open file
 	data = Dataset(file_location + date_time.strftime("%Y-%m-%d_%H_%M_%S"))
