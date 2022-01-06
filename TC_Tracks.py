@@ -321,6 +321,16 @@ def main():
 					TC_tracks_list.remove(tc_track)
 					continue
 
+				# if the last latitude or longitude (most recent time) in the tc_track object goes outside the boundaries of the dataset (e.g. the track lat > 
+				# the maximum lat of the dataset, add the track object to finished_TC_tracks_list and remove it from TC_tracks_list. 
+				# The TC track is finished because it has reached the boundaries of the dataset.
+				if tc_track.latlon_list[-1][0] > np.amax(common_object.lat) or tc_track.latlon_list[-1][0] < np.amin(common_object.lat) \
+					or tc_track.latlon_list[-1][1] > np.amax(common_object.lon) or tc_track.latlon_list[-1][1] < np.amin(common_object.lon): 
+					print("track finished - outside of boundary")
+					finished_TC_tracks_list.append(tc_track)
+					TC_tracks_list.remove(tc_track)
+					continue
+
 				# advect tracks
 				print("advecting...")
 				advect_tracks(common_object, u_3d, v_3d, tc_track, times, time_index)
