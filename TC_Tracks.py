@@ -366,7 +366,7 @@ def main():
 	print(model_type)
 
 	# save tracks to file
-	tracks_file = open(model_type + '_' + scenario_type + '_TC_tracks_' + year + '_E1_0514_Jun-Nov.obj', 'wb') # 'wb' means write binary, if just 'w' is used, a string is expected
+	tracks_file = open(model_type + '_' + scenario_type + '_TC_tracks_' + year + '_E9_0506_Jun-Nov.obj', 'wb') # 'wb' means write binary, if just 'w' is used, a string is expected
 	pickle.dump(finished_TC_tracks_list, tracks_file)
 
 if __name__ == '__main__':
