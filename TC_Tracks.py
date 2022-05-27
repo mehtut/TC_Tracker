@@ -35,6 +35,7 @@ import numpy.ctypeslib as ctl
 # The timeframe over which TC tracks are found can be modified in main and is typically set to run from June-November. The output of this 
 # program is a TC track object and a figure of all tracks found over the given time period. To run the program, for example, type:
 # python TC_Tracks.py --model 'WRF' --scenario 'Historical' --year '2001'
+# python TC_Tracks.py --model 'WRF' --scenario 'both_filter' --ensemble 'E0_0515' --year '2003'
 
 
 # Common info class. Each instance/object of Common_track_data is an object that holds the latitude and longitude arrays,
@@ -43,6 +44,7 @@ import numpy.ctypeslib as ctl
 class Common_track_data:
 	def __init__(self):
 		self.model = None
+		self.scenario = None
 		self.lat = None
 		self.lon = None
 		self.lat_index_north = None
@@ -60,9 +62,18 @@ class Common_track_data:
 		self.slp_threshold = None
 		self.warm_core_threshold = None
 		self.radius = None
+		self.highres_u = None # this is only used for the HighResMIP data
+		self.highres_v = None # this is only used for the HighResMIP data
+		self.highres_t = None # this is only used for the HighResMIP data
+		self.highres_uas = None # this is only used for the HighResMIP data
+		self.highres_vas = None # this is only used for the HighResMIP data
+		self.highres_psl = None # this is only used for the HighResMIP data
 	# function to add the model type to self.model
 	def add_model(self, model_type):
 		self.model = model_type
+	# function to add the scenario type to self.scenario
+	def add_scenario(self, scenario_type):
+		self.scenario = scenario_type
 
 # TC track class. Each instance/object of TC_track is a a TC track and has corresponding lat/lon points
 # and magnitudes of the vorticity at those points. The lat/lon and magnitudes are stored in lists that are 
@@ -72,7 +83,9 @@ class Common_track_data:
 class TC_track:
 	def __init__(self):
 		self.latlon_list = [] # creates a new empty list for lat/lon tuples
-		self.magnitude_list = [] # creates a new empty list for the magnitude of the vorticity at each lat/lon point
+		self.windspeed_list = [] # creates a new empty list for the 10m windspeed at each lat/lon point
+		self.slp_list = [] # creates a new empty list for the sea level pressue at each lat/lon point
+		self.relvort_list = [] # creates a new empty list for the 850 hPa relative vorticity at each lat/lon point
 		self.time_list = [] # creates a new empty list for the times for each new location in the track
 		self.counter = 0 # creates a counter that starts set at zero. This counter will be used to see how many times a track object finds no matching points in unique_track_locations.
 
@@ -82,8 +95,14 @@ class TC_track:
 	def remove_latlon(self, latlon):
 		self.latlon_list.remove(latlon)
 
-	def add_magnitude(self, magnitude):
-		self.magnitude_list.append(magnitude)
+	def add_windspeed(self, windspeed):
+		self.windspeed_list.append(windspeed)
+
+	def add_slp(self, slp):
+		self.slp_list.append(slp)
+
+	def add_relvort(self, relvort):
+		self.relvort_list.append(relvort)
 
 	def add_time(self, time):
 		self.time_list.append(time)
@@ -98,6 +117,7 @@ def main():
 	parser = argparse.ArgumentParser(description='TC Tracker.')
 	parser.add_argument('--model', dest='model_type', help='Get the model type for the data (WRF, CAM5, ERA5)', required=True)
 	parser.add_argument('--scenario', dest='scenario_type', help='Get the scenario type to be used (Historical, late_century, Plus30)', required=True)
+#	parser.add_argument('--ensemble', dest='ensemble_number', help='Get the ensemble to be used (Historical, late_century, Plus30)', required=True)
 	parser.add_argument('--year', dest='year', help='Get the year of interest', required=True)
 	args = parser.parse_args()
 
@@ -105,8 +125,12 @@ def main():
 	model_type = args.model_type 
 	# set the scenario type that is parsed from the command line
 	scenario_type = args.scenario_type 
+	# set the ensemble that is parsed from the command line
+#	ensemble_number = args.ensemble_number
 	# set the year that is parsed from the command line
 	year = args.year
+
+	highresmip_models = ['EC-Earth3P-HR','HadGEM3-GC31-HM','CMCC-CM2-VHR4']
 
 	# Set threshold values. These are based on Chris Patricola's tracker that was used on 27 km WRF data.
 	# minimum 10m windspeed
@@ -127,6 +151,8 @@ def main():
 	common_object = Common_track_data()
 	# assign the model type to the common_object
 	common_object.add_model(model_type)
+	# assign the scenario type to the common_object
+	common_object.add_scenario(scenario_type)
 	# assign the minimum 10m windspeed threshold to the common_object
 	common_object.wspd_10m_threshold = wspd_10m_threshold
 	# assign the relative vorticity threshold to the common_object
@@ -138,13 +164,31 @@ def main():
 	# assign the radius in km to the common object 
 	common_object.radius = radius_km
 	# get the common track data (like lat and lon) and assign it to the appropriate attributes in common_object
-	get_common_track_data(common_object)
+	get_common_track_data(common_object, highresmip_models)
 
 	# set time information
 #	times = np.arange(datetime(int(year),5,1,0), datetime(int(year),11,1,0), timedelta(hours=common_object.dt)).astype(datetime) # May - October (AEW seasn)
-	times = np.arange(datetime(int(year),6,1,0), datetime(int(year),12,1,0), timedelta(hours=common_object.dt)).astype(datetime) # June - November (tropical cyclone season)
-#	times = np.arange(datetime(int(year),8,1,0), datetime(int(year),9,1,0), timedelta(hours=common_object.dt)).astype(datetime) # month of August
+#	times = np.arange(datetime(int(year),6,1,0), datetime(int(year),12,1,0), timedelta(hours=common_object.dt)).astype(datetime) # June - November (tropical cyclone season)
+	times = np.arange(datetime(int(year),5,1,0), datetime(int(year),12,1,0), timedelta(hours=common_object.dt)).astype(datetime) # May-November
 #	times = np.arange(datetime(int(year),9,1,0), datetime(int(year),10,1,0), timedelta(hours=common_object.dt)).astype(datetime) # September
+
+	# if the model type is from the HighResMIP data, load the u and v files here because the files contain months of data, instead of one file per six hour period
+	if model_type in highresmip_models:
+		highres_u, highres_v, highres_t, highres_uas, highres_vas, highres_psl = get_highresmip_data(year,common_object,times)
+		common_object.highres_u = highres_u
+		common_object.highres_v = highres_v
+		common_object.highres_t = highres_t
+		common_object.highres_uas = highres_uas
+		common_object.highres_vas = highres_vas
+		common_object.highres_psl = highres_psl
+
+	# the HadGEM model only has 30 days in each month
+	if common_object.model == 'HadGEM3-GC31-HM':
+		index_list = []
+		for time_index in range(0,times.shape[0]):
+			if times[time_index].strftime('%d') == '31':
+				index_list.append(time_index)
+		times = np.delete(times, index_list)
 
 	# create a working list for TC tracks
 	TC_tracks_list = []
@@ -155,7 +199,8 @@ def main():
 		print(times[time_index].strftime('%Y-%m-%d_%H'))
 
 		# get variables for each time step
-		u_3d, v_3d, t_3d, rel_vort_3d, wspd_10m_2d, slp_2d = get_variables(common_object, scenario_type, times[time_index])
+#		u_3d, v_3d, t_3d, rel_vort_3d, wspd_10m_2d, slp_2d = get_variables(common_object, scenario_type, ensemble_number, times[time_index], highresmip_models)
+		u_3d, v_3d, t_3d, rel_vort_3d, wspd_10m_2d, slp_2d = get_variables(common_object, scenario_type, times[time_index], highresmip_models)
 
 		# create some empty lists that may or may not be filled in later depending on if any TC points are found
 		rel_vort_locs = []
@@ -331,6 +376,10 @@ def main():
 					TC_tracks_list.remove(tc_track)
 					continue
 
+				# assign windspeed, slp and relative vorticity magnitudes to each lat/lon point
+				print("assigning magnitudes...")
+				assign_magnitude(common_object, wspd_10m_2d, slp_2d, rel_vort_3d, tc_track)
+
 				# advect tracks
 				print("advecting...")
 				advect_tracks(common_object, u_3d, v_3d, tc_track, times, time_index)
@@ -366,7 +415,8 @@ def main():
 	print(model_type)
 
 	# save tracks to file
-	tracks_file = open(model_type + '_' + scenario_type + '_TC_tracks_' + year + '_E9_0506_Jun-Nov.obj', 'wb') # 'wb' means write binary, if just 'w' is used, a string is expected
+#	tracks_file = open(model_type + '_' + scenario_type + '_TC_tracks_' + year + '_' + ensemble_number + '_Jun-Nov.obj', 'wb') # 'wb' means write binary, if just 'w' is used, a string is expected
+	tracks_file = open(model_type + '_' + scenario_type + '_TC_tracks_' + year + '_May-Nov.obj', 'wb') # 'wb' means write binary, if just 'w' is used, a string is expected
 	pickle.dump(finished_TC_tracks_list, tracks_file)
 
 if __name__ == '__main__':

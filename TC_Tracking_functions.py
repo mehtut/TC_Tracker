@@ -438,7 +438,7 @@ def remove_latlon_time(track_object,time_number):
 	for time in time_list:
 		track_object.remove_time(time)
 
-	return
+	return None
 
 
 # This is a function that takes a track object, the list of vorticity maximum lat/lon locations, the current time index,
@@ -474,8 +474,9 @@ def unique_track_locations(track_object,combined_unique_max_locs,current_time_in
 				continue		
 	if not found_matching_latlon:
 		# increase the counter of the track object to keep track of how many times a lat/lon pair that is close is NOT found
-		track_object.counter += 1	
-	return
+		track_object.counter += 1
+
+	return None
 
 
 # This function takes a circle average at a specific point. The function takes the common_object,
@@ -544,6 +545,66 @@ def circle_avg_m_point(common_object,var,lat_lon_pair):
 
 	return smoothed_var
 
+# This function assigns a TC track object a 10m windspeed, sea level pressure, and 850 hPa relative vorticity that corresponds with the last
+# lat/lon location of the track object. The function takes the common_object, the 10m windspeed, the sea level pressure, the 3D relative
+# vorticity, and the track object as parameters and does not return anything. Instead of returning, it just assigns
+# the windspeed, slp, and relative vorticity to the track object.
+def assign_magnitude(common_object, wspd_10m, slp, rel_vort_3d, track_object): 
+	# get the lat and lon indices for the last lat/lon pair in the latlon_list
+	lat_lon_pair = track_object.latlon_list[-1] # get the last lat/lon pair in the latlon_list
+	# get the indices for the lat/lon point
+	lat_index = (np.abs(common_object.lat[:,0] - lat_lon_pair[0])).argmin()
+	lon_index = (np.abs(common_object.lon[0,:] - lat_lon_pair[1])).argmin()
+
+	R=6371. # Earth radius in km
+	storm_radius = 250 # km, about 2 degrees
+	# Get the number of gridpoints equivalent to the storm radius.
+	# To convert the storm radius in km to gridpoints, multiply the radius (in km) by the total number of 
+	# longitude gridpoints for the whole domain divided by the degrees of longitude in the domain
+	# divided by 360 times the circumference of the Earth = 2piR. The degrees of longitude/360 * circumference is to
+	# scale the circumference to account for non-global data. This is also a rough approximation since we're not quite at the equator.
+	# So radius_gridpts = radius (in km) * (longitude gridpoints / scaled circumference of Earth (in km))
+	# Make radius_gridpts an int so it can be used as a loop index later.  
+	radius_gridpts = int(storm_radius*(common_object.lat.shape[1]/((common_object.total_lon_degrees/360)*2*np.pi*R)))
+
+	# using the radius_gridpts, create a box aroudn the central lat/lon point to check for the max windspeed and relative vorticity and
+	# min sea level pressure. Need to check and make sure that the box edges don't go out of bounds.
+	if (common_object.lat.shape[0]-1)-lat_index < radius_gridpts: # check to see if the lat_index is too close to the upper bound
+		north_lat_index = common_object.lat.shape[0]-1 # if the lat_index is too close to the upper bound, set north_lat_index to the upper bound
+	else:
+		north_lat_index = lat_index + radius_gridpts # otherwise set north_lat_index to the lat_index + radius_gridpts
+	if lat_index < radius_gridpts: # check to see if the lat_index is too close to the lower bound
+		south_lat_index = 0 # if the lat_index is too close to the lower bound, set south_lat_index to zero
+	else:
+		south_lat_index = lat_index - radius_gridpts # # otherwise set south_lat_index to the lat_index - radius_gridpts
+	if (common_object.lat.shape[1]-1)-lon_index < radius_gridpts: # check to see if the lon_index is too close to the right (east) bound
+		east_lon_index = common_object.lat.shape[1]-1 # if the lon_index is too close to the right bound, set east_lon_index to the right bound
+	else:
+		east_lon_index = lon_index + radius_gridpts # otherwise set east_lon_index to lon_index + radius_gridpts
+	if lon_index < radius_gridpts: # check to see if the lon_index is too close to the left (west) bound
+		west_lon_index = 0 # if the lon_index is too close to the left bound, set left_lon_index to zero
+	else:
+		west_lon_index = lon_index - radius_gridpts # otherwise set east_lon_index to lon_index - radius_gridpts
+
+	# the length of the track object's latlon_list should be one longer than the windspeed_list
+	# since the windspeed hasn't been appended yet
+	if len(track_object.latlon_list) - len(track_object.windspeed_list) == 1:
+		# append
+		track_object.add_windspeed(np.amax(wspd_10m[south_lat_index:north_lat_index+1,west_lon_index:east_lon_index+1]))
+
+	# the length of the track object's latlon_list should be one longer than the slp_list
+	# since the slp hasn't been appended yet
+	if len(track_object.latlon_list) - len(track_object.slp_list) == 1:
+		track_object.add_slp(np.amin(slp[south_lat_index:north_lat_index+1,west_lon_index:east_lon_index+1]))
+
+	# the length of the track object's latlon_list should be one longer than the relvort_list
+	# since the relative vorticity hasn't been appended yet
+	if len(track_object.latlon_list) - len(track_object.relvort_list) == 1:
+		track_object.add_relvort(np.amax(rel_vort_3d[0,south_lat_index:north_lat_index+1,west_lon_index:east_lon_index+1])) # the zero index is so the 850 hPa level is used
+
+	return None
+
+
 # This function uses the average of the u and v wind between 850 and 600 hPa to advect
 # a track object's last lat/lon point to get the next lat/lon point in time. 
 # The function takes the common_object, the zonal wind u, the meridional wind v, the track_object,
@@ -584,7 +645,7 @@ def advect_tracks(common_object, u_3d, v_3d, track_object, times, time_index):
 		# add the next time to the end of the track_objects time list
 		track_object.add_time(times[time_index+1])
 
-	return
+	return None
 
 
 
